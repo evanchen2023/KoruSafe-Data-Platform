@@ -83,7 +83,7 @@ data_generator/data/generated/claims.csv
 - Pandas
 - SQLAlchemy
 - Pytest
-- Faker (For testing right now)
+- Faker (For testing)
 
 ## Data Model
 

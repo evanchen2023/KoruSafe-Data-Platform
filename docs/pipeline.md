@@ -1,0 +1,15 @@
+Source
+ ↓
+Extract
+ ↓
+Raw
+ ↓
+Validate
+ ↓
+Transform
+ ↓
+Processed
+ ↓
+Load
+ ↓
+PostgreSQL
