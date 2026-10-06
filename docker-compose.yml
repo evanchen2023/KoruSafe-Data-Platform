@@ -1,4 +1,30 @@
+
+x-airflow-common-env: &airflow-common-env
+  AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+  AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+  AIRFLOW__API_AUTH__JWT_SECRET: "908ebfe470cb22eb1b9202155979f30f32a538b911fcbbb29b1a2261164923cf"
+  KORUSAFE_PROJECT_ROOT: /opt/airflow/project
+  KORUSAFE_POSTGRES_HOST: korusafe-postgres
+  KORUSAFE_POSTGRES_PORT: "5432"
+  KORUSAFE_POSTGRES_DB: korusafe
+  KORUSAFE_POSTGRES_USER: postgres
+  KORUSAFE_POSTGRES_PASSWORD: postgres
+  PYTHONPATH: /opt/airflow/project
+  _PIP_ADDITIONAL_REQUIREMENTS: pandas psycopg2-binary
+
+x-airflow-common-volumes: &airflow-common-volumes
+  - ./:/opt/airflow/project
+  - ./dags:/opt/airflow/dags
+  - ./logs:/opt/airflow/logs
+  - ./plugins:/opt/airflow/plugins
+  - ./config:/opt/airflow/config
+
 services:
+
+  # --------------------------------------------------
+  # KoruSafe PostgreSQL
+  # --------------------------------------------------
   postgres:
     image: postgres:16
     container_name: korusafe-postgres
@@ -14,5 +40,95 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+
+  # --------------------------------------------------
+  # Airflow Metadata PostgreSQL
+  # --------------------------------------------------
+  airflow-postgres:
+    image: postgres:16
+    container_name: korusafe-airflow-postgres
+
+    environment:
+      POSTGRES_DB: airflow
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+
+    volumes:
+      - airflow_postgres_data:/var/lib/postgresql/data
+
+
+  # --------------------------------------------------
+  # Airflow API Server
+  # --------------------------------------------------
+  airflow-api-server:
+    image: apache/airflow:3.1.0
+
+    container_name: korusafe-airflow-api
+
+    depends_on:
+      - airflow-postgres
+      - postgres
+
+    environment:
+      <<: *airflow-common-env
+
+    volumes:
+      *airflow-common-volumes
+
+    ports:
+      - "8080:8080"
+
+    command: api-server
+
+
+  # --------------------------------------------------
+  # Airflow Scheduler
+  # --------------------------------------------------
+  airflow-scheduler:
+    image: apache/airflow:3.1.0
+
+    container_name: korusafe-airflow-scheduler
+
+    depends_on:
+      - airflow-api-server
+      - airflow-postgres
+      - postgres
+
+    environment:
+      <<: *airflow-common-env
+      AIRFLOW__CORE__EXECUTION_API_SERVER_URL: http://airflow-api-server:8080/execution/
+
+    volumes:
+      *airflow-common-volumes
+
+    command: scheduler
+
+
+  # --------------------------------------------------
+  # Airflow DAG Processor
+  # --------------------------------------------------
+  airflow-dag-processor:
+    image: apache/airflow:3.1.0
+
+    container_name: korusafe-airflow-dag-processor
+
+    depends_on:
+      - airflow-postgres
+      - postgres
+
+    environment:
+      <<: *airflow-common-env
+
+    volumes:
+      *airflow-common-volumes
+
+    command: dag-processor
+
+
 volumes:
+
   postgres_data:
+    name: korusafe-data-platform_postgres_data
+
+  airflow_postgres_data:
+    name: korusafe-data-platform_airflow_postgres_data
