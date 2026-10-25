@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: korusafe_raw
+    database: korusafe
+    schema: public
+    
+    tables:
+      - name: organisations
+        description: "Raw organisation records loaded by the Airflow ETL pipeline."
+
+      - name: employees
+        description: "Employee records loaded into PostgreSQL by the Airflow ETL pipeline."
+
+      - name: incidents
+        description: "Workplace incident records loaded by the Airflow ETL pipeline."
+
+      - name: injuries
+        description: "Employee injury records loaded by the Airflow ETL pipeline."
+
+      - name: claims
+        description: "Insurance claim records loaded by the Airflow ETL pipeline."
